@@ -20,3 +20,5 @@ soupsieve==2.3.2.post1
 SQLAlchemy==1.4.42
 typing-extensions==4.4.0
 urllib3==1.26.12
+azure-storage-blob==12.11.0
+azure-identity==1.10.0
