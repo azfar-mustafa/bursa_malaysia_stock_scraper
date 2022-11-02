@@ -12,3 +12,9 @@ if [ $(az group exists --name $resourceGroup) = false ]; then
     echo "Resource group $resourceGroup is created"
 else echo "Resource group $resourceGroup is existed"
 fi
+
+
+# Create general purpose storage account
+az storage account create --resource-group $resourceGroup --name $storageAccount --sku Standard_LRS
+
+echo "Storage account $storageAccount is created"
