@@ -61,18 +61,16 @@ def save_file_to_csv(data):
 
     #processed_file = data.to_csv(index=False, encoding="utf-8")
 
-    #blob_service_client = BlobServiceClient(account_url="https://azfarstorageaccountblob.blob.core.windows.net", credential=default_credential)
-    #blob_client = blob_service_client.get_blob_client(container=container_name, blob=filename)
+    blob_service_client = BlobServiceClient(account_url="https://azfarstorageaccountblob.blob.core.windows.net", credential=default_credential)
+    blob_client = blob_service_client.get_container_client(container=container_name)
 
-    file = open(file=filepath, mode='w')
-    file.write("Hello, World!")
-    file.close()
+    # Store dataframe into a csv
+    data.to_csv(filepath, index=False)
+    logging.info('File is created')
 
-    blob_client = BlobServiceClient.get_blob_client(account_url="https://azfarstorageaccountblob.blob.core.windows.net", container_name=container_name, credential=default_credential)
-
-    with open(file=filepath, mode="rb") as data:
-        blob_client.upload_blob(data)
-
+    with open(filepath, "rb") as data:
+        blob_client.upload_blob(name='testblob.csv', data=data)
+        logging.info('File is uploaded')
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
