@@ -12,7 +12,6 @@ import azure.functions as func
 def create_container():
         container_name = 'stagings1'
         default_credential = DefaultAzureCredential()
-        #blob_service_client = BlobServiceClient(account_url="https://azfarstorageaccountblob.blob.core.windows.net", credential="LoF5PY6TtdG+cFuEQroq67GoOBfp/CvVtzZJ1FFKhvBDBhXwMs4KjqHmMI0s0G7MNSNOxGTdZPOG+AStoSdBhw==")
         blob_service_client = BlobServiceClient(account_url="https://azfarstorageaccountblob.blob.core.windows.net", credential=default_credential)
         container = blob_service_client.create_container(container_name)
         if container:
