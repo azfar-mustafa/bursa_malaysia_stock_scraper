@@ -1,4 +1,4 @@
-import logging, tempfile, os
+import logging, tempfile, os, pendulum
 import requests
 import pandas as pd
 import string
@@ -9,15 +9,14 @@ from azure.identity import DefaultAzureCredential
 import azure.functions as func
 
 
-def create_container():
-        container_name = 'stagings1'
+def create_container(container, storage_account_url):
         default_credential = DefaultAzureCredential()
-        blob_service_client = BlobServiceClient(account_url="https://azfarstorageaccountblob.blob.core.windows.net", credential=default_credential)
-        container = blob_service_client.create_container(container_name)
-        if container:
-            print(f"Container {container_name} is created")
+        blob_service_client = BlobServiceClient(account_url=storage_account_url, credential=default_credential)
+        blob_container = blob_service_client.create_container(container)
+        if blob_container:
+            print(f"Container {container} is created")
         else:
-            print(f"Container {container_name} is existed")
+            print(f"Container {container} is existed")
 
 
 def url(letter):
@@ -27,6 +26,7 @@ def url(letter):
     soup = BeautifulSoup(res.text, 'html.parser') # Use lxml to parse HTML
     table = soup.find('table', {'class': 'marketWatch'})
     return table
+
 
 def create_data():
     # Extracted data from website is stored in a dataframe
@@ -52,35 +52,38 @@ def create_data():
     return df
 
 
-def save_file_to_csv(data):
-    filename = 'test.csv'
+def save_file_to_csv(data, container, filename, storage_account_url):
     local_filepath = tempfile.gettempdir()
     filepath = os.path.join(local_filepath, filename)
-    container_name = 'stagings1'
+    
     default_credential = DefaultAzureCredential()
-
-    #processed_file = data.to_csv(index=False, encoding="utf-8")
-
-    blob_service_client = BlobServiceClient(account_url="https://azfarstorageaccountblob.blob.core.windows.net", credential=default_credential)
-    blob_client = blob_service_client.get_container_client(container=container_name)
+    blob_service_client = BlobServiceClient(account_url=storage_account_url, credential=default_credential)
+    blob_client = blob_service_client.get_container_client(container=container)
 
     # Store dataframe into a csv
     data.to_csv(filepath, index=False)
     logging.info('File is created')
 
     with open(filepath, "rb") as data:
-        blob_client.upload_blob(name='testblob.csv', data=data)
+        blob_client.upload_blob(name=filename, data=data)
         logging.info('File is uploaded')
+
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
 
+    account_url = "https://azfarstorageaccountblob.blob.core.windows.net"
+    container_name = 'raw'
+    current_date = pendulum.today('Asia/Kuala_Lumpur')
+    current_date = current_date.format('DDMMYYYY')
+    filename = f"raw_bursa_malaysia_{current_date}.csv"
+
     try:
-        #create_container()
+        create_container(container_name, account_url)
         dataset = create_data()
-        save_file_to_csv(dataset)
-        x = 1+1
-        return func.HttpResponse(f"This HTTP triggered function successfully {x}.")
+        save_file_to_csv(dataset, container_name, filename, account_url)
+
+        return func.HttpResponse(f"{filename} is successfully uploaded.")
     except Exception as e:
         logging.info(e)
         return func.HttpResponse(
