@@ -2,13 +2,14 @@ import logging, tempfile, os, pendulum
 import requests
 import pandas as pd
 import string
+import azure.functions as func
 from bs4 import BeautifulSoup 
 from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient
 from azure.identity import DefaultAzureCredential
 
-import azure.functions as func
 
 
+# This function is to create container in blob storage
 def create_container(container, storage_account_url):
         default_credential = DefaultAzureCredential()
         blob_service_client = BlobServiceClient(account_url=storage_account_url, credential=default_credential)
@@ -19,17 +20,17 @@ def create_container(container, storage_account_url):
             print(f"Container {container} is existed")
 
 
+# This function is to extract data from bursa stock malaysia website
 def url(letter):
-    # Extract data from website
     url = f"https://www.malaysiastock.biz/Listed-Companies.aspx?type=A&value={letter}"
-    res = requests.get(url) # Use requests package to get the url content
-    soup = BeautifulSoup(res.text, 'html.parser') # Use lxml to parse HTML
+    res = requests.get(url)
+    soup = BeautifulSoup(res.text, 'html.parser')
     table = soup.find('table', {'class': 'marketWatch'})
     return table
 
 
+# This function is to store the extracted website data in a dataframe
 def create_data():
-    # Extracted data from website is stored in a dataframe
     alphabet_param = list(string.ascii_lowercase)
     number_param = ['0']
     actual_param = alphabet_param + number_param
@@ -52,15 +53,14 @@ def create_data():
     return df
 
 
-def save_file_to_csv(data, container, filename, storage_account_url):
+# This function is to upload dataframe into blob
+def upload_file_to_blob(data, container, filename, storage_account_url):
     local_filepath = tempfile.gettempdir()
     filepath = os.path.join(local_filepath, filename)
-    
     default_credential = DefaultAzureCredential()
     blob_service_client = BlobServiceClient(account_url=storage_account_url, credential=default_credential)
     blob_client = blob_service_client.get_container_client(container=container)
 
-    # Store dataframe into a csv
     data.to_csv(filepath, index=False)
     logging.info('File is created')
 
@@ -69,6 +69,7 @@ def save_file_to_csv(data, container, filename, storage_account_url):
         logging.info('File is uploaded')
 
 
+# Main function to accept to execute the process
 def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
 
@@ -81,11 +82,11 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     try:
         create_container(container_name, account_url)
         dataset = create_data()
-        save_file_to_csv(dataset, container_name, filename, account_url)
-
+        upload_file_to_blob(dataset, container_name, filename, account_url)
         return func.HttpResponse(f"{filename} is successfully uploaded.")
     except Exception as e:
         logging.info(e)
+        #status_code = 
         return func.HttpResponse(
                 f"!! This HTTP triggered function executed unsuccessfully. \n\t {e} ",
                 status_code=200
