@@ -22,3 +22,4 @@ typing-extensions==4.4.0
 urllib3==1.26.12
 azure-storage-blob==12.11.0
 azure-identity==1.10.0
+pendulum==2.1.2
