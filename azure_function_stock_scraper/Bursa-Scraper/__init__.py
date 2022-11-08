@@ -2,8 +2,9 @@ import logging, tempfile, os, pendulum
 import requests
 import pandas as pd
 import string
+from bs4 import BeautifulSoup
+
 import azure.functions as func
-from bs4 import BeautifulSoup 
 from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient
 from azure.identity import DefaultAzureCredential
 
