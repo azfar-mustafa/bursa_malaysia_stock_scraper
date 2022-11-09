@@ -15,6 +15,11 @@ fi
 
 
 # Create general purpose storage account
-az storage account create --resource-group $resourceGroup --name $storageAccount --sku Standard_LRS
+#az storage account create --resource-group $resourceGroup --name $storageAccount --sku Standard_LRS
 
-echo "Storage account $storageAccount is created"
+#echo "Storage account $storageAccount is created"
+
+
+
+# Create function app in azure
+az functionapp create --resource-group $resourceGroup --consumption-plan-location "$functionLocation" --runtime python --runtime-version 3.8 --functions-version 3 --name $appName --os-type linux --storage-account $storageAccount
